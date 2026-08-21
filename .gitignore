@@ -1,0 +1,62 @@
+# Local Python environment
+venv/
+.venv/
+env/
+.env
+.env.*
+*.env
+
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter / notebook checkpoints
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Project data and generated artifacts
+Outputs/
+output/
+results/
+
+test_results/
+nb9b_pulse_bridge_2.py
+Notebooks/old/
+
+# Large raw/processed datasets
+Data/Raw/
+Data/Processed/
+
+# Generated model artifacts
+*.pkl
+*.joblib
+*.h5
+*.hdf5
+
+# Local IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Local secrets / keys / credentials
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+secrets.*
+*.secret
+*.token
