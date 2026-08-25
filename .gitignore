@@ -23,9 +23,9 @@ __pycache__/
 Outputs/
 output/
 results/
-
 test_results/
-nb9b_pulse_bridge_2.py
+
+# Old notebooks
 Notebooks/old/
 
 # Large raw/processed datasets

@@ -410,6 +410,6 @@ if __name__ == "__main__":
     print("  SECTION 7b: exercise intervention (only run after 7a passes)")
     print("=" * 60)
     exercise_result = run_pulse_bridge(
-        test_patient, intervention={'type': 'exercise', 'intensity': 0.06}, advance_seconds=30
+        test_patient, intervention={'type': 'exercise', 'intensity': 0.0375}, advance_seconds=360
     )
     print(exercise_result)
