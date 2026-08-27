@@ -60,3 +60,6 @@ Desktop.ini
 secrets.*
 *.secret
 *.token
+
+# Machine-specific configuration
+local_config.py

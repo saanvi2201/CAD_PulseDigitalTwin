@@ -51,23 +51,22 @@ CHANGELOG vs the previous version -- read this before running
 import os
 import sys
 
-# ── Update this for your machine ──────────────────────────────────────────────
-PULSE_INSTALL_PATH = r"D:\pulse-engine\build\install\python"
+# Import machine-specific paths from local_config.py
+# Each team member creates their own local_config.py (it's in .gitignore)
+try:
+    from local_config import PULSE_INSTALL_PATH, PULSE_DATA_ROOT_DIR, PATIENT_TEMPLATE_RELATIVE_PATH
+except ImportError:
+    raise ImportError(
+        "Missing local_config.py! Create it with your machine-specific Pulse paths.\n"
+        "Example content:\n"
+        "  PULSE_INSTALL_PATH = r'D:\\pulse-engine\\build\\install\\python'\n"
+        "  PULSE_DATA_ROOT_DIR = r'D:\\pulse-engine\\build\\install\\bin'\n"
+        "  PATIENT_TEMPLATE_RELATIVE_PATH = r'D:\\pulse-engine\\build\\install\\bin\\patients\\Soldier.json'\n"
+    )
+
+# Add Pulse Python bindings to sys.path
 sys.path.insert(0, PULSE_INSTALL_PATH)
-
-# ── PULSE_DATA_ROOT_DIR — REQUIRED, NOT A GUESS YOU CAN SKIP ──────────────────
-# Every reference example calls pc.set_data_root_dir(...) before
-# initialize_engine(). This must point at the folder Pulse resolves its
-# relative paths against ("./states/...", "./patients/...", "./environments/...").
-# Look inside your D:\pulse-engine\build\install tree for whichever folder
-# directly CONTAINS "states", "patients", and "environments" subfolders
-# (commonly the same folder the HowTo_*.py scripts are meant to be run from,
-# or a sibling "data"/"bin" folder) and put that path here.
-PULSE_DATA_ROOT_DIR = r"D:\pulse-engine\build\install\bin"  # <-- VERIFY THIS
-
-# Same reasoning for the patient template -- this must resolve to an actual
-# Soldier.json (or another baseline patient file) under PULSE_DATA_ROOT_DIR.
-PATIENT_TEMPLATE_RELATIVE_PATH = r"D:\pulse-engine\build\install\bin\patients\Soldier.json"  # <-- VERIFY THIS
+sys.path.insert(0, PULSE_DATA_ROOT_DIR)
 
 LOG_DIR = "./test_results/nb9b/"
 os.makedirs(LOG_DIR, exist_ok=True)
