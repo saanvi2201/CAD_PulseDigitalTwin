@@ -1,0 +1,91 @@
+{
+  "patient": {
+    "name": "NB9E_TestPatient",
+    "age": 45,
+    "sex": "male",
+    "height_cm": 178,
+    "weight_kg": 82,
+    "systolic_bp": 120,
+    "diastolic_bp": 80,
+    "gender": "m",
+    "ap_hi": 120,
+    "ap_lo": 80,
+    "cholesterol_level": 1,
+    "glucose_level": 1,
+    "smoking": 0,
+    "alcohol": 0,
+    "physical_activity": 1
+  },
+  "ml": {
+    "lifestyle": {
+      "cohort": "lifestyle",
+      "p_base": 0.2104258637912801,
+      "p_integrated": 0.25420068840279775,
+      "ml_risk": 0.2024635979486868,
+      "risk_band": "Low",
+      "domain_attribution": {
+        "lifestyle": 6.460110664367676,
+        "clinical": 88.46297454833984,
+        "genetic": 5.07691764831543
+      },
+      "_explainer_used": "TreeExplainer",
+      "_unmatched_features": []
+    },
+    "clinical": {
+      "cohort": "clinical",
+      "p_base": 0.2356841610737753,
+      "p_integrated": 0.27567024109291866,
+      "ml_risk": 0.18951287949216714,
+      "risk_band": "Low",
+      "domain_attribution": {
+        "clinical": 96.19087220684665,
+        "lifestyle": 0.0,
+        "genetic": 3.8091277931533467
+      },
+      "_explainer_used": "LinearExplainer",
+      "_unmatched_features": []
+    }
+  },
+  "pulse": {
+    "baseline": {
+      "pulse_before": {
+        "heart_rate_bpm": 83.99999999880612,
+        "systolic_bp_mmHg": 121.04078760176822,
+        "diastolic_bp_mmHg": 80.34531808286224,
+        "map_mmHg": 101.59505931626786,
+        "cardiac_output_L_per_min": 6.111568767872997
+      },
+      "pulse_after": {
+        "heart_rate_bpm": 84.02714658676783,
+        "systolic_bp_mmHg": 121.04841326231906,
+        "diastolic_bp_mmHg": 80.34788915708813,
+        "map_mmHg": 101.600902142163,
+        "cardiac_output_L_per_min": 6.114226718006195
+      },
+      "intervention_applied": null,
+      "advance_seconds": 10
+    },
+    "exercise_counterfactual": {
+      "pulse_before": {
+        "heart_rate_bpm": 83.99999999880612,
+        "systolic_bp_mmHg": 121.04078760176822,
+        "diastolic_bp_mmHg": 80.34531808286224,
+        "map_mmHg": 101.59505931626786,
+        "cardiac_output_L_per_min": 6.111568767872997
+      },
+      "pulse_after": {
+        "heart_rate_bpm": 78.17967712733116,
+        "systolic_bp_mmHg": 114.86692264441255,
+        "diastolic_bp_mmHg": 68.36702918139707,
+        "map_mmHg": 92.80956509402435,
+        "cardiac_output_L_per_min": 6.759352397253365
+      },
+      "intervention_applied": {
+        "type": "exercise",
+        "intensity": 0.0375,
+        "comment": "NB9E exercise counterfactual"
+      },
+      "advance_seconds": 360
+    }
+  }
+}

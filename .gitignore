@@ -60,3 +60,6 @@ Desktop.ini
 secrets.*
 *.secret
 *.token
+
+# Temporary/local project files
+*.log
