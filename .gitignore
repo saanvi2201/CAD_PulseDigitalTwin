@@ -63,3 +63,6 @@ secrets.*
 
 # Machine-specific configuration
 local_config.py
+
+# Temporary/local project files
+*.log
