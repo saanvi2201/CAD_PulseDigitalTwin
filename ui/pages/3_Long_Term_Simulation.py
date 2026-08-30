@@ -5,9 +5,14 @@ from ui_helpers import setup_page, hero, require_patient_selected, get_simulator
 setup_page("Long-Term Simulation", "📈")
 hero(
     "📈", "Long-Term Simulation",
-    "This is an <b>ML counterfactual</b> — the trained model re-scored on modified feature values, "
-    "using published effect sizes for each intervention. It is <b>not</b> a physiological simulation "
-    "over time. For a real-time physiological response, use <b>Short-Term Simulation</b> instead.",
+    "A what-if view: the model is scored again after selected inputs are changed, using published population-average evidence where available. "
+    "It is not a personal clinical forecast or a simulation of the body changing day by day.",
+)
+
+st.warning(
+    "**Read this before using a result:** This is an educational, model-based scenario — not medical advice. "
+    "When more than one change is selected, separately studied average effects are added together, so the combined result may overstate a real individual's benefit. "
+    "See **Project Overview** in the sidebar for all limitations."
 )
 
 patient, cohort, source, label = require_patient_selected()
@@ -19,7 +24,6 @@ st.subheader("Choose what this patient sustains long-term")
 if cohort == "lifestyle":
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("<div class='cad-card'>", unsafe_allow_html=True)
         exercise = st.checkbox("🏃 **Start regular exercise**", help=(
             "Applies a published blood-pressure reduction for sustained aerobic exercise, "
             "AND updates the model's own 'physically active' input to reflect this change — "
@@ -48,9 +52,7 @@ if cohort == "lifestyle":
                 "estimated average BP reductions of about **1.05 mmHg systolic** and **0.92 mmHg "
                 "diastolic per kg** lost. [Read the study](https://www.ahajournals.org/doi/10.1161/01.hyp.0000094221.86888.ae)."
             )
-        st.markdown("</div>", unsafe_allow_html=True)
     with c2:
-        st.markdown("<div class='cad-card'>", unsafe_allow_html=True)
         quit_smoking = st.checkbox("🚭 Quit smoking", disabled=not patient.get("smoking"),
                                     help=None if patient.get("smoking") else "This patient isn't recorded as a smoker.")
         years_since_quit = st.slider("Years since quitting", 0, 20, 0) if quit_smoking else 0
@@ -64,7 +66,7 @@ if cohort == "lifestyle":
                 "with benefit accumulating over time. The model uses a 0–15 year linear approximation "
                 "because no single published patient-level recovery equation applies here. "
                 "[Read the review](https://pmc.ncbi.nlm.nih.gov/articles/PMC11843939/) and "
-                "[the Cochrane review](https://pubmed.ncbi.nlm.nih.gov/14583958/)."
+                "[the Cochrane review](https://pubmed.ncbi.nlm.nih.gov/14974003/)."
             )
         alcohol_cessation = st.checkbox("🍷 Stop alcohol", disabled=not patient.get("alcohol"),
                                          help=None if patient.get("alcohol") else "This patient isn't recorded as drinking alcohol.")
@@ -77,7 +79,6 @@ if cohort == "lifestyle":
                 "who drink more heavily, but the effect depends on baseline intake. "
                 "[Roerecke et al. (2017) systematic review and meta-analysis](https://pubmed.ncbi.nlm.nih.gov/29253389/)."
             )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     interventions = {}
     if exercise:
@@ -199,6 +200,13 @@ if run:
             f"⏳ **Time-adjusted estimate**: some benefits (like quitting smoking) "
             f"don't fully materialize immediately. Accounting for how long it takes: "
             f"**{td['ml_risk']:.1%}** — {td['note']}"
+        )
+
+    with st.expander("Key assumptions and limitations for this result", expanded=True):
+        for assumption in result.get("modelling_assumptions", []):
+            st.markdown(f"- {assumption}")
+        st.markdown(
+            "- The displayed risk is a re-scored model output, not a diagnosis or a prediction that this patient will experience an outcome."
         )
 
     with st.expander("Applied intervention details"):

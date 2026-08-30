@@ -35,6 +35,7 @@ NAV_PAGES = [
     ("pages/5_Explainability.py", "🔬", "Explainability"),
     ("pages/6_Summary.py", "📊", "Summary"),
     ("pages/7_Manual_Patients.py", "🧾", "Manual Patients"),
+    ("pages/8_Project_Overview.py", "ℹ️", "Project Overview"),
 ]
 
 

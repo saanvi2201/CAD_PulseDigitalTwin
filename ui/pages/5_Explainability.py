@@ -70,31 +70,33 @@ display_features = prepare_display_features(top_features) if top_features else [
 
 
 def feature_value_text(feature: dict) -> str:
-    """Describe the patient's recorded value without implying causation."""
+    """Describe the recorded input in everyday language without implying causation."""
     feature_key = feature["feature"]
     value = patient.get(feature_key)
     if value is None and feature_key in {"cholesterol_level", "glucose_level"}:
         value = patient.get(feature_key)
     if value is None:
-        return "The displayed contribution is based on this patient's recorded model input."
+        return "This is based on the information recorded for this patient."
     if feature_key in {"smoking", "alcohol", "physical_activity"}:
-        return f"The recorded value for this patient is **{'Yes' if value else 'No'}**."
-    return f"The recorded value for this patient is **{value}**."
+        return f"Recorded here as: **{'Yes' if value else 'No'}**."
+    return f"Recorded value: **{value}**."
 
 
 def feature_explanation(feature: dict, contribution_pct: float) -> str:
-    """Plain-language, patient-safe explanation for one model feature."""
+    """Short, plain-language explanation of a model contribution."""
     if feature["shap_value"] > 0:
-        direction = "a higher estimated risk"
+        direction = "pushed the model's estimate higher"
     elif feature["shap_value"] < 0:
-        direction = "a lower estimated risk"
+        direction = "pushed the model's estimate lower"
     else:
-        direction = "little change in the estimated risk"
+        direction = "made almost no difference to the model's estimate"
+    influence = "a relatively large" if contribution_pct >= 20 else "a smaller"
     return (
-        f"In this model, this patient's value is associated with **{direction}**. "
-        f"It represents **{contribution_pct:.1f}%** of the absolute explanation across the displayed features. "
-        "That percentage is not this patient's risk, and it does not show that this factor caused an outcome. "
+        f"For this patient, **{feature['display_name']}** {direction}. "
+        f"It accounts for about **{contribution_pct:.1f}%** of the factors shown on this page, "
+        f"which makes it {influence} influence on this model result. "
         f"{feature_value_text(feature)}"
+        " This does not mean it caused an outcome or that changing it will change risk by the same amount."
     )
 
 
@@ -228,9 +230,8 @@ with c2:
 # who wants the underlying numbers, separated from the plain summary above.
 # =============================================================================
 st.divider()
-st.subheader("Full feature-by-feature detail")
-st.caption("🔺 pushes estimated risk up · 🔻 pushes estimated risk down. Numbers are model-internal "
-           "contribution scores (SHAP values), not percentage-point changes in risk.")
+st.subheader("How each recorded factor affected this result")
+st.caption("🔺 made the model estimate higher · 🔻 made it lower. The number and percentage compare factors within this explanation; they are not changes in the patient's risk percentage.")
 
 if not display_features:
     st.info("No feature-level detail is available for this patient.")

@@ -46,10 +46,11 @@ WHAT THIS MODULE DELIBERATELY DOES NOT DO
     the clinical cohort. These are stress-test-derived fields; a lifestyle
     projection has no literature-grounded way to predict them, and they are
     exactly what the SHORT-term (Pulse / real stress test) panel is for.
-  - Does NOT apply a quantitative alcohol-reduction formula. A literature
-    coefficient for this was not verified in this session, so it is left as
-    a direct binary flag flip only (see ALCOHOL note below) rather than
-    inventing a dose-response number.
+  - Does NOT apply a quantitative alcohol-reduction formula. Although R6
+    reports blood-pressure effects by baseline drinks/day, this dataset stores
+    alcohol use only as Yes/No. It cannot tell whether a person drank above
+    the study threshold or by how much, so applying that dose-response would
+    invent information that is not present in the patient's record.
   - Does NOT claim precision it doesn't have. The smoking-cessation TIME
     DECAY curve is explicitly a constructed linear interpolation between two
     qualitative literature findings, not a fitted/published coefficient. It
@@ -90,8 +91,8 @@ before using the numbers in anything submitted for publication)
 
 [R3] Critchley JA, Capewell S. "Smoking cessation for the secondary
      prevention of coronary heart disease." Cochrane Database Syst Rev.
-     2004;(1):CD003041. PMID 14583958.
-     https://pubmed.ncbi.nlm.nih.gov/14583958/
+     2004;(1):CD003041. PMID 14974003.
+     https://pubmed.ncbi.nlm.nih.gov/14974003/
      20 cohort studies, patients with DIAGNOSED CHD, >=2 yr follow-up.
      Pooled RR for mortality in quitters vs continuing smokers: 0.64
      (95% CI 0.58-0.71), i.e. ~36% relative risk reduction. Also RR 0.68 for
@@ -131,14 +132,21 @@ before using the numbers in anything submitted for publication)
      cohort's cholesterol_level is categorical and is intentionally not
      touched — see module docstring above).
 
+[R6] Roerecke M et al. "Effect of a reduction in alcohol consumption on blood
+     pressure: a systematic review and meta-analysis." Lancet Public Health.
+     2017;2(2):e108-e120. PMID 29253389.
+     https://pubmed.ncbi.nlm.nih.gov/29253389/
+     In people drinking >2 drinks/day, reducing intake was associated with
+     lower BP; the largest reported effect was among people drinking >=6
+     drinks/day who reduced intake by about 50% (SBP -5.50, DBP -3.97 mmHg).
+
 ALCOHOL / PHYSICAL_ACTIVITY note: these are binary flags in the lifestyle
-cohort's training data (alcohol, physical_activity). A verified, citable
-continuous dose-response formula for alcohol reduction was not established
-in this session (some literature exists, e.g. Xin et al. 2001, but it was
-not verified here — do not trust the number below until you check it
-yourself). Rather than fabricate a coefficient, this module only supports
-flipping these as direct binary flags, which is defensible because it is
-literally the feature representation the model was trained on.
+cohort's training data (alcohol, physical_activity). R6 is valid evidence
+that alcohol reduction can lower BP in people drinking above 2 drinks/day,
+but this app does not record drinks/day or the amount of reduction. Therefore
+the simulator deliberately does not apply R6's numerical effect; it only
+changes the binary alcohol input when the user selects stopping alcohol.
+That is a model what-if, not an alcohol dose-response prediction.
 
 DECAY MODEL — smoking cessation time course (CONSTRUCTED, read carefully)
 -----------------------------------------------------------------------------
@@ -199,9 +207,9 @@ REFERENCES = {
         "citation": "Critchley JA, Capewell S. Smoking cessation for the "
                      "secondary prevention of coronary heart disease. "
                      "Cochrane Database Syst Rev. 2004;(1):CD003041. "
-                     "PMID 14583958.",
-        "url": "https://pubmed.ncbi.nlm.nih.gov/14583958/",
-        "confidence": "high (but secondary-prevention population only — see scope note)",
+                     "PMID 14974003.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/14974003/",
+        "confidence": "supporting context only; not consumed by a formula; secondary-prevention population",
     },
     "smoking_cessation_timecourse": {
         "citation": "Cardiovascular Effects of Smoking and Smoking Cessation: "
@@ -218,6 +226,13 @@ REFERENCES = {
                      "1983;15(5):393-402. PMID 6645868.",
         "url": "https://pubmed.ncbi.nlm.nih.gov/6645868/",
         "confidence": "low/moderate — heterogeneous across literature, see docstring",
+    },
+    "alcohol_reduction_bp_context": {
+        "citation": "Roerecke M et al. Effect of a reduction in alcohol consumption on blood pressure: "
+                     "a systematic review and meta-analysis. Lancet Public Health. 2017;2(2):e108-e120. "
+                     "PMID 29253389.",
+        "url": "https://pubmed.ncbi.nlm.nih.gov/29253389/",
+        "confidence": "high for the studied dose groups; not applied because this app lacks drinks/day data",
     },
 }
 
@@ -410,9 +425,10 @@ class LongTermSimulator:
             modified_raw["alcohol"] = 0
             applied.append({
                 "intervention": "alcohol_cessation_flag",
-                "note": "Direct binary flag flip only — no verified continuous "
-                        "dose-response formula was established this session. "
-                        "See ALCOHOL note in module docstring.",
+                "reference": REFERENCES["alcohol_reduction_bp_context"],
+                "note": "Direct binary flag flip only. The alcohol study is not "
+                        "numerically applied because the record has no drinks/day "
+                        "or amount-reduced data. See ALCOHOL note in module docstring.",
                 "constructed_approximation": False,
             })
 
@@ -435,6 +451,11 @@ class LongTermSimulator:
             "baseline_risk": baseline_result,
             "projected_risk_full_effect": modified_result,
             "delta_ml_risk": modified_result["ml_risk"] - baseline_result["ml_risk"],
+            "modelling_assumptions": [
+                "Effects from separately studied interventions are added together. "
+                "Their combined effect has not been directly validated for this individual and may be smaller.",
+                "This is a model re-score after changing selected inputs, not a clinical forecast or treatment recommendation.",
+            ],
         }
 
         if smoking_decay_info is not None:
@@ -541,6 +562,12 @@ class LongTermSimulator:
             "baseline_risk": baseline_result,
             "projected_risk_full_effect": modified_result,
             "delta_ml_risk": modified_result["ml_risk"] - baseline_result["ml_risk"],
+            "modelling_assumptions": [
+                "Effects from separately studied interventions are added together. "
+                "Their combined effect has not been directly validated for this individual and may be smaller.",
+                "A DBP of 80 mmHg is used only to select the exercise-study subgroup because this cohort has no DBP field.",
+                "This is a model re-score after changing selected inputs, not a clinical forecast or treatment recommendation.",
+            ],
         }
 
 

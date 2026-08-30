@@ -8,10 +8,11 @@ hero("🫀", "Coronary Artery Disease Digital Twin",
 steps = [
     ("🔎", "Select Patient", "Choose a patient from the predefined dataset, or enter one manually.", "pages/1_Select_Patient.py"),
     ("🗂️", "Patient Dashboard", "See their profile and current ML-estimated CAD risk, with a plain-language reason.", "pages/2_Patient_Dashboard.py"),
-    ("📈", "Long-Term Simulation", "A what-if ML counterfactual — how would risk change with exercise, weight loss, quitting smoking, etc.", "pages/3_Long_Term_Simulation.py"),
+    ("📈", "Long-Term Simulation", "A research-informed what-if view of how the model estimate changes with exercise, weight loss, quitting smoking, and more.", "pages/3_Long_Term_Simulation.py"),
     ("🫁", "Short-Term Simulation", "A real physiological simulation (Pulse engine) of an acute exercise bout: heart rate / BP / cardiac output response.", "pages/4_Short_Term_Simulation.py"),
     ("🔬", "Explainability", "Which specific factors — genetic, clinical, lifestyle — are driving this patient's risk, and by how much.", "pages/5_Explainability.py"),
     ("📊", "Summary", "Browse and click into every patient this system knows about, predefined or manually entered.", "pages/6_Summary.py"),
+    ("ℹ️", "Project Overview & Limitations", "Understand what this digital twin does, how its parts fit together, its intended impact, and its important limits.", "pages/8_Project_Overview.py"),
 ]
 
 st.markdown(
