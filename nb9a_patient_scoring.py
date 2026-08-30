@@ -283,6 +283,32 @@ def domain_attribution_single(shap_row, feature_names, domain_map, prs_contribut
     return pct, unmatched
 
 
+def top_feature_contributions(shap_row, feature_names, domain_map, top_n=6):
+    """
+    Returns the top_n individual features driving THIS patient's risk, each
+    with its domain (via domain_map, same lookup logic as domain_attribution_
+    single) and its direction (this feature's SHAP value pushed risk up or
+    down for this specific patient) -- not just an aggregate domain percentage.
+    Used by the UI's Explainability page to answer "if lifestyle is the
+    biggest contributor, what in lifestyle specifically?".
+    """
+    feat_to_domain = {}
+    for domain, feats in domain_map.items():
+        for f in feats:
+            feat_to_domain[f] = domain
+
+    rows = []
+    for feat, val in zip(feature_names, shap_row):
+        rows.append({
+            'feature': feat,
+            'domain': feat_to_domain.get(feat, 'clinical'),  # unmatched -> clinical, matches domain_attribution_single
+            'shap_value': float(val),
+            'direction': 'increases' if val > 0 else ('decreases' if val < 0 else 'no effect'),
+        })
+    rows.sort(key=lambda r: abs(r['shap_value']), reverse=True)
+    return rows[:top_n]
+
+
 def assign_band(p):
     for i in range(len(THRESHOLDS) - 1):
         if THRESHOLDS[i] <= p < THRESHOLDS[i + 1]:
@@ -351,6 +377,7 @@ class PatientScoringModel:
             'p_base': p_base, 'p_integrated': p_integrated, 'ml_risk': p_calibrated,
             'risk_band': assign_band(p_calibrated),
             'domain_attribution': domain_pct,
+            'top_features': top_feature_contributions(this_row_shap, self.ls_features, LS_DOMAIN_MAP),
             '_explainer_used': explainer_used,
             '_unmatched_features': sorted(unmatched) if unmatched else [],
         }
@@ -376,6 +403,7 @@ class PatientScoringModel:
             'p_base': p_base, 'p_integrated': p_integrated, 'ml_risk': p_calibrated,
             'risk_band': assign_band(p_calibrated),
             'domain_attribution': domain_pct,
+            'top_features': top_feature_contributions(this_row_shap, self.cl_features, CL_DOMAIN_MAP),
             '_explainer_used': explainer_used,
             '_unmatched_features': sorted(unmatched) if unmatched else [],
         }

@@ -1,0 +1,3 @@
+patient_id,timestamp_utc,cohort,age,gender_or_sex,patient_json
+manual_2413338a73,2026-08-29T14:17:16.144193+00:00,lifestyle,54.0,f,"{""age"": 54.0, ""gender"": ""f"", ""height_cm"": 160.0, ""weight_kg"": 78.0, ""systolic_bp"": 142.0, ""diastolic_bp"": 90.0, ""cholesterol_level"": 3, ""glucose_level"": 2, ""smoking"": 0, ""alcohol"": 0, ""physical_activity"": 0, ""_provenance"": {""source"": ""manual_entry""}}"
+manual_9dd3f0b1bb,2026-08-29T16:27:24.468574+00:00,lifestyle,50.0,f,"{""age"": 50.0, ""gender"": ""f"", ""height_cm"": 170.0, ""weight_kg"": 70.0, ""systolic_bp"": 120.0, ""diastolic_bp"": 80.0, ""cholesterol_level"": 1, ""glucose_level"": 1, ""smoking"": 1, ""alcohol"": 1, ""physical_activity"": 0, ""_provenance"": {""source"": ""manual_entry""}}"
