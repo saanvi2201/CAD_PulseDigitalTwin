@@ -399,6 +399,27 @@ def list_manual_patients(csv_path: str = DEFAULT_MANUAL_PATIENTS_CSV) -> pd.Data
     return df[["patient_id", "timestamp_utc", "cohort", "age", "gender_or_sex"]]
 
 
+def delete_manual_patient(
+    patient_id: str,
+    csv_path: str = DEFAULT_MANUAL_PATIENTS_CSV,
+) -> None:
+    """Permanently remove one manually entered patient from its own CSV store.
+
+    Predefined dataset records cannot reach this function. The caller must
+    provide the exact generated manual patient ID, which makes the deletion
+    target explicit and leaves all other saved records unchanged.
+    """
+    if not os.path.isfile(csv_path):
+        raise FileNotFoundError(f"No manual patients file found at {csv_path}.")
+
+    df = pd.read_csv(csv_path)
+    if patient_id not in set(df["patient_id"]):
+        raise KeyError(f"patient_id={patient_id!r} not found in {csv_path}.")
+
+    updated_df = df[df["patient_id"] != patient_id]
+    updated_df.to_csv(csv_path, index=False)
+
+
 # =============================================================================
 # RECHECK / RESCORE -- get a fresh risk estimate for any patient dict
 # (predefined-dataset OR manual, baseline OR already-modified) without

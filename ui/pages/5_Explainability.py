@@ -69,6 +69,35 @@ def prepare_display_features(top_features):
 display_features = prepare_display_features(top_features) if top_features else []
 
 
+def feature_value_text(feature: dict) -> str:
+    """Describe the patient's recorded value without implying causation."""
+    feature_key = feature["feature"]
+    value = patient.get(feature_key)
+    if value is None and feature_key in {"cholesterol_level", "glucose_level"}:
+        value = patient.get(feature_key)
+    if value is None:
+        return "The displayed contribution is based on this patient's recorded model input."
+    if feature_key in {"smoking", "alcohol", "physical_activity"}:
+        return f"The recorded value for this patient is **{'Yes' if value else 'No'}**."
+    return f"The recorded value for this patient is **{value}**."
+
+
+def feature_explanation(feature: dict, contribution_pct: float) -> str:
+    """Plain-language, patient-safe explanation for one model feature."""
+    if feature["shap_value"] > 0:
+        direction = "a higher estimated risk"
+    elif feature["shap_value"] < 0:
+        direction = "a lower estimated risk"
+    else:
+        direction = "little change in the estimated risk"
+    return (
+        f"In this model, this patient's value is associated with **{direction}**. "
+        f"It represents **{contribution_pct:.1f}%** of the absolute explanation across the displayed features. "
+        "That percentage is not this patient's risk, and it does not show that this factor caused an outcome. "
+        f"{feature_value_text(feature)}"
+    )
+
+
 # =============================================================================
 # PLAIN-LANGUAGE SUMMARY — written for a patient, not a data scientist.
 # No "SHAP", no "attribution magnitude", no raw coefficients here — those
@@ -230,6 +259,8 @@ else:
                     f"<div class='feat-bar-fill' style='width:{bar_pct:.0f}%;background:{bar_color}'></div></div>",
                     unsafe_allow_html=True,
                 )
+                with st.expander(f"What does {f['display_name']} mean here?"):
+                    st.markdown(feature_explanation(f, contribution_pct))
 
 if result.get("_unmatched_features"):
     st.warning(f"These features didn't match either domain map and were folded into 'clinical' by default: "

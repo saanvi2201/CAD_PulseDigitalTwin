@@ -33,17 +33,23 @@ cards = [
 for col, title, val, sub, cohort_key in cards:
     with col:
         st.markdown(
-            f"<div class='cad-stat cad-card-hover'>"
+            f"<div class='cad-stat'>"
             f"<div class='cad-stat-num'>{val:,}</div>"
             f"<div class='cad-stat-label'>{title}</div>"
             f"<div class='cad-stat-tag'>{sub}</div></div>",
             unsafe_allow_html=True,
         )
         if cohort_key:
-            if st.button("Browse these patients →", key=f"browse_{cohort_key}", use_container_width=True):
+            if st.button(
+                f"Browse {cohort_key} patients →",
+                key=f"browse_{cohort_key}",
+                type="primary",
+                use_container_width=True,
+            ):
                 go_browse_cohort(cohort_key)
         else:
-            st.caption("↓ Listed below")
+            if st.button("Manage manual patients →", key="manage_manual", type="primary", use_container_width=True):
+                st.switch_page("pages/7_Manual_Patients.py")
 
 st.divider()
 st.subheader("Risk overview for a sample of patients")
@@ -120,3 +126,5 @@ if manual_df.empty:
     st.info("None saved yet — add one from **Select Patient → Manually Entered Patient**.")
 else:
     st.dataframe(manual_df, use_container_width=True)
+    if st.button("🧾 Open Manual Patients", type="primary"):
+        st.switch_page("pages/7_Manual_Patients.py")

@@ -142,7 +142,9 @@ if run:
         with col:
             st.markdown(f"**{name}**")
             st.caption(explanation)
-            mini_df = pd.DataFrame({"": [b, a]}, index=["Before", "After"])
+            # Altair 6 (used internally by Streamlit) rejects an unnamed
+            # DataFrame field. A real column name keeps this chart compatible.
+            mini_df = pd.DataFrame({"Measurement": [b, a]}, index=["Before", "After"])
             st.bar_chart(mini_df, height=180)
             delta_color = "#C62828" if delta > 0 else "#2E7D32"
             st.markdown(
