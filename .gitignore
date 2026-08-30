@@ -61,5 +61,8 @@ secrets.*
 *.secret
 *.token
 
+# Machine-specific configuration
+local_config.py
+
 # Temporary/local project files
 *.log
