@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
+import altair as alt
 
 from ui_helpers import (
     setup_page, hero, require_patient_selected, get_model, risk_band_pill, domain_dot,
-    friendly_feature_name,
+    friendly_feature_name, DOMAIN_COLOR,
 )
 
 setup_page("Explainability", "🔬")
@@ -97,16 +98,20 @@ else:
 
     sentences = []
     sentences.append(
-        f"Most of this patient's estimated risk comes from **{domain_plain.get(top_domain, top_domain)}** — "
-        f"about **{top_domain_pct:.0f}%** of what's driving the number."
+        f"For **{label}**, the model estimates a **{result['ml_risk']:.1%}** risk level. "
+        "This is a model estimate based on the information available for this patient; it is not a diagnosis."
+    )
+    sentences.append(
+        f"The largest share of the explanation comes from **{domain_plain.get(top_domain, top_domain)}** "
+        f"(**{top_domain_pct:.0f}%** of the model's explained risk signal)."
     )
 
     if increasing:
         names = ", ".join(f"**{f['display_name']}**" for f in increasing[:2])
-        sentences.append(f"The biggest factor(s) pushing their risk *up* — {names}.")
+        sentences.append(f"The factors most associated with a higher estimate are {names}.")
     if decreasing:
         names = ", ".join(f"**{f['display_name']}**" for f in decreasing[:2])
-        sentences.append(f"The biggest factor(s) working *in their favor* — {names}.")
+        sentences.append(f"The factors most associated with a lower estimate are {names}.")
 
     if len(domain_df) > 1:
         second = domain_df.iloc[1]
@@ -116,8 +121,11 @@ else:
                 f"meaningful role, at about **{second['Contribution (%)']:.0f}%**."
             )
 
-    st.markdown(f"<div class='cad-card' style='font-size:1.02rem;line-height:1.7'>{' '.join(sentences)}</div>",
-                unsafe_allow_html=True)
+    # Markdown must be rendered outside an HTML string; Streamlit does not
+    # parse **bold** or *emphasis* inside the contents of an HTML div.
+    with st.container(border=True):
+        for sentence in sentences:
+            st.markdown(sentence)
 
     if "genetic" in domain_pct:
         st.markdown(
@@ -138,9 +146,47 @@ st.subheader("Breakdown by domain")
 domain_df = pd.DataFrame({"Domain": list(domain_pct.keys()), "Contribution (%)": list(domain_pct.values())}) \
     .sort_values("Contribution (%)", ascending=False)
 
+chart_type = st.radio(
+    "Chart type",
+    ["Bar chart", "Pie chart"],
+    horizontal=True,
+    label_visibility="collapsed",
+)
+
+# Use the same colours in the chart and in the text legend.
+domain_order = domain_df["Domain"].tolist()
+domain_colors = [DOMAIN_COLOR.get(domain, "#888888") for domain in domain_order]
+
 c1, c2 = st.columns([1, 1])
 with c1:
-    st.bar_chart(domain_df.set_index("Domain"))
+    if chart_type == "Pie chart":
+        chart = alt.Chart(domain_df).mark_arc(innerRadius=55).encode(
+            theta=alt.Theta("Contribution (%):Q", stack=True),
+            color=alt.Color(
+                "Domain:N",
+                scale=alt.Scale(domain=domain_order, range=domain_colors),
+                legend=None,
+            ),
+            tooltip=[
+                alt.Tooltip("Domain:N", title="Domain"),
+                alt.Tooltip("Contribution (%):Q", title="Contribution", format=".1f"),
+            ],
+        ).properties(height=300)
+    else:
+        chart = alt.Chart(domain_df).mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4).encode(
+            x=alt.X("Domain:N", sort=domain_order, title=None),
+            y=alt.Y("Contribution (%):Q", title="Contribution (%)", scale=alt.Scale(domain=[0, 100])),
+            color=alt.Color(
+                "Domain:N",
+                scale=alt.Scale(domain=domain_order, range=domain_colors),
+                legend=None,
+            ),
+            tooltip=[
+                alt.Tooltip("Domain:N", title="Domain"),
+                alt.Tooltip("Contribution (%):Q", title="Contribution", format=".1f"),
+            ],
+        ).properties(height=300)
+    st.altair_chart(chart, use_container_width=True)
     st.caption("Share of the patient's total explained risk signal coming from each domain.")
 with c2:
     for _, row in domain_df.iterrows():

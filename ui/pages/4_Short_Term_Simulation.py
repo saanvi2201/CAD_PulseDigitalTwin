@@ -16,11 +16,44 @@ st.markdown(
 patient, cohort, source, label = require_patient_selected()
 st.markdown(f"Patient: **{label}** ({cohort} cohort)")
 
-if cohort != "lifestyle":
-    st.warning(
-        "⚠️ `build_pulse_patient_configuration()` was built against the lifestyle-cohort "
-        "raw schema. Confirm it supports the clinical-cohort field set before running "
-        "this on a clinical patient."
+# Exercise simulation is only supported for patients whose resting blood
+# pressure is at or below the configured safe threshold. Check this before
+# creating/running the Pulse job so the engine is never started for an
+# ineligible patient.
+MAX_SHORT_TERM_SYSTOLIC_BP = 120
+MAX_SHORT_TERM_DIASTOLIC_BP = 80
+
+
+def _as_number(value):
+    """Return a numeric value when possible; otherwise return None."""
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+systolic_bp = _as_number(patient.get("systolic_bp", patient.get("ap_hi")))
+diastolic_bp = _as_number(patient.get("diastolic_bp", patient.get("ap_lo")))
+
+eligibility_error = None
+if systolic_bp is None or diastolic_bp is None:
+    eligibility_error = (
+        "Short-term simulation cannot be run because this patient does not have "
+        "both systolic and diastolic blood-pressure values."
+    )
+elif systolic_bp > MAX_SHORT_TERM_SYSTOLIC_BP or diastolic_bp > MAX_SHORT_TERM_DIASTOLIC_BP:
+    eligibility_error = (
+        "Short-term simulation cannot be run for this patient: resting blood pressure "
+        f"is {systolic_bp:g}/{diastolic_bp:g} mmHg. Exercise simulation is limited to "
+        f"patients at or below {MAX_SHORT_TERM_SYSTOLIC_BP}/{MAX_SHORT_TERM_DIASTOLIC_BP} mmHg."
+    )
+
+if eligibility_error:
+    st.error(f"🚫 {eligibility_error}")
+else:
+    st.success(
+        f"✓ Patient is eligible for short-term simulation "
+        f"({systolic_bp:g}/{diastolic_bp:g} mmHg)."
     )
 
 st.divider()
@@ -33,7 +66,12 @@ with c2:
     duration_s = st.slider("Duration (seconds)", 30, 1800, 360, step=30)
     st.caption(f"= {duration_s // 60} min {duration_s % 60} sec of simulated time.")
 
-run = st.button("▶️ Run Pulse simulation", type="primary")
+run = st.button(
+    "▶️ Run Pulse simulation",
+    type="primary",
+    disabled=eligibility_error is not None,
+    help=eligibility_error,
+)
 
 if run:
     import sys

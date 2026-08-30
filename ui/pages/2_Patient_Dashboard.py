@@ -59,17 +59,25 @@ with right:
 
         st.markdown("#### Why this number?")
         why_text = (
-            f"**{top_domain.capitalize()}** factors are the largest contributor "
-            f"({domain_pct[top_domain]:.0f}% of the attributed risk signal)."
+            f"For **{label}**, the model estimates a **{result['ml_risk']:.1%}** CAD risk from the "
+            "available profile. This is an estimate to support discussion and follow-up, not a diagnosis.\n\n"
+            f"**{top_domain.capitalize()}** factors account for the largest share of the model's explanation "
+            f"(**{domain_pct[top_domain]:.0f}%** of its attributed risk signal)."
         )
         if top_feat_in_domain:
             fname = friendly_feature_name(top_feat_in_domain["feature"])
             direction = top_feat_in_domain["direction"]
             why_text += (
-                f" Within that, **{fname}** has the single largest effect for this "
-                f"patient, and it currently **{direction} their risk**."
+                f" Within that group, **{fname}** has the strongest model contribution for this "
+                f"patient and is associated with a model estimate that **{direction} risk**."
             )
-        st.markdown(f"<div class='cad-card'>{why_text}</div>", unsafe_allow_html=True)
+        # Do not place Markdown inside an HTML card: Streamlit will then show
+        # the literal ** markers instead of rendering emphasis.
+        with st.container(border=True):
+            st.markdown(why_text)
+            st.caption(
+                "These percentages describe the model's explanation, not the percentage of risk caused by a factor."
+            )
         st.caption("See the **Explainability** page for the full feature-by-feature breakdown.")
 
         if result.get("_unmatched_features"):

@@ -27,22 +27,56 @@ if cohort == "lifestyle":
             "the model can see."
         ))
         with st.expander("What exactly does this change?"):
-            st.caption(
-                "• Lowers systolic/diastolic blood pressure using a published dose-response "
-                "figure for sustained aerobic training (Kelley & Kelley, 2001).\n\n"
-                "• Also sets this patient's 'physically active' status to Yes, since starting "
-                "regular exercise is exactly what that model input measures."
+            st.markdown(
+                "This assumes the patient sustains regular aerobic exercise for weeks to months. "
+                "The simulation lowers resting blood pressure and changes the model's "
+                "**Physically active** input to Yes. It does not simulate one workout or "
+                "guarantee an individual clinical outcome.\n\n"
+                "**Evidence used:** Kelley & Kelley (2001), a meta-analysis of 47 randomized "
+                "trials, reported lower resting blood pressure after aerobic exercise; the "
+                "implemented effect is larger for participants with baseline BP at or above 140/90. "
+                "[Read the study](https://onlinelibrary.wiley.com/doi/10.1111/j.1520-037X.2001.00529.x)."
             )
         weight_loss_kg = st.slider("⚖️ Weight loss (kg)", 0.0, 30.0, 0.0, step=0.5,
                                     help="Applies a published per-kg blood pressure reduction (Neter et al., 2003).")
+        with st.expander("What exactly does weight loss change?"):
+            st.markdown(
+                "This reduces the patient's weight by the selected amount, recalculates BMI, and "
+                "lowers systolic/diastolic blood pressure. The change is modelled as a sustained "
+                "weight loss, not a short-term fluctuation.\n\n"
+                "**Evidence used:** Neter et al. (2003), a meta-analysis of 25 randomized trials, "
+                "estimated average BP reductions of about **1.05 mmHg systolic** and **0.92 mmHg "
+                "diastolic per kg** lost. [Read the study](https://www.ahajournals.org/doi/10.1161/01.hyp.0000094221.86888.ae)."
+            )
         st.markdown("</div>", unsafe_allow_html=True)
     with c2:
         st.markdown("<div class='cad-card'>", unsafe_allow_html=True)
         quit_smoking = st.checkbox("🚭 Quit smoking", disabled=not patient.get("smoking"),
                                     help=None if patient.get("smoking") else "This patient isn't recorded as a smoker.")
         years_since_quit = st.slider("Years since quitting", 0, 20, 0) if quit_smoking else 0
+        with st.expander("What exactly does quitting smoking change?"):
+            st.markdown(
+                "The model changes the patient's smoking input from Yes to No. The full-effect "
+                "result shows the model's smoker-versus-non-smoker difference; the time-adjusted "
+                "result applies an **illustrative, constructed** recovery curve based on years since quitting. "
+                "It is not a patient-specific clinical prediction.\n\n"
+                "**Evidence used:** smoking cessation is associated with lower cardiovascular risk, "
+                "with benefit accumulating over time. The model uses a 0–15 year linear approximation "
+                "because no single published patient-level recovery equation applies here. "
+                "[Read the review](https://pmc.ncbi.nlm.nih.gov/articles/PMC11843939/) and "
+                "[the Cochrane review](https://pubmed.ncbi.nlm.nih.gov/14583958/)."
+            )
         alcohol_cessation = st.checkbox("🍷 Stop alcohol", disabled=not patient.get("alcohol"),
                                          help=None if patient.get("alcohol") else "This patient isn't recorded as drinking alcohol.")
+        with st.expander("What exactly does stopping alcohol change?"):
+            st.markdown(
+                "The model changes the dataset's alcohol-use input from Yes to No. Because this "
+                "dataset records alcohol use only as a Yes/No field—not amount, frequency, or prior "
+                "intake—the simulation does **not** invent a precise blood-pressure or risk reduction.\n\n"
+                "**Evidence context:** reducing alcohol can lower blood pressure, especially for people "
+                "who drink more heavily, but the effect depends on baseline intake. "
+                "[Roerecke et al. (2017) systematic review and meta-analysis](https://pubmed.ncbi.nlm.nih.gov/29253389/)."
+            )
         st.markdown("</div>", unsafe_allow_html=True)
 
     interventions = {}
@@ -62,10 +96,33 @@ else:
     c1, c2 = st.columns(2)
     with c1:
         exercise = st.checkbox("🏃 Start regular exercise", help="Affects resting BP only — the clinical schema has no 'activity flag' or weight field.")
+        with st.expander("What exactly does regular exercise change?"):
+            st.markdown(
+                "This lowers the resting blood-pressure field used by the clinical model. The clinical "
+                "dataset has no physical-activity field, so it does not change an activity status.\n\n"
+                "**Evidence used:** sustained aerobic exercise reduced resting BP in a meta-analysis of "
+                "randomized trials. [Kelley & Kelley (2001)](https://onlinelibrary.wiley.com/doi/10.1111/j.1520-037X.2001.00529.x)."
+            )
         weight_loss_kg = st.slider("⚖️ Weight loss (kg)", 0.0, 30.0, 0.0, step=0.5)
+        with st.expander("What exactly does weight loss change?"):
+            st.markdown(
+                "This applies a per-kilogram resting-BP reduction. The clinical dataset has no weight "
+                "or BMI input, so the simulation does not alter those fields.\n\n"
+                "**Evidence used:** Neter et al. (2003) estimated average reductions of about 1.05 mmHg "
+                "systolic and 0.92 mmHg diastolic per kg lost. "
+                "[Read the study](https://www.ahajournals.org/doi/10.1161/01.hyp.0000094221.86888.ae)."
+            )
     with c2:
         apply_lipid = st.checkbox("🩸 Also apply exercise's effect on cholesterol",
                                    help="Optional, lower-confidence literature effect — off by default. See REFERENCES['exercise_lipids_optional'] in nb10.")
+        with st.expander("What exactly does the optional cholesterol change?"):
+            st.markdown(
+                "When selected with regular exercise, this applies a small average reduction to the "
+                "clinical cohort's cholesterol field. It is off by default because published results vary "
+                "across studies and it should not be treated as a guaranteed individual effect.\n\n"
+                "**Evidence used:** a meta-analysis found modest average lipid changes with exercise. "
+                "[Read the study](https://pubmed.ncbi.nlm.nih.gov/6645868/)."
+            )
     st.markdown("</div>", unsafe_allow_html=True)
     interventions = {}
     if exercise:
@@ -123,10 +180,17 @@ if run:
 
     st.write("")
     chart_df = pd.DataFrame({"Scenario": ["Baseline", "Projected"], "Risk": [baseline["ml_risk"], projected["ml_risk"]]}).set_index("Scenario")
-    st.bar_chart(chart_df)
+    bar_col, line_col = st.columns(2)
+    with bar_col:
+        st.markdown("**Risk comparison**")
+        st.bar_chart(chart_df, color="#6c9bfb")
+    with line_col:
+        st.markdown("**Risk projection**")
+        st.line_chart(chart_df, color="#4cd98f")
     st.caption(
         "Compares estimated risk **before** any change (Baseline) against estimated risk **after** "
-        "the changes you selected (Projected) — a shorter bar means lower estimated risk."
+        "the changes you selected (Projected) — a shorter bar and a downward line mean lower estimated risk. "
+        "The line connects the two scenario estimates; it is not a day-by-day clinical forecast."
     )
 
     if result.get("projected_risk_with_time_decay"):

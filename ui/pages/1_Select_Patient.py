@@ -7,6 +7,7 @@ from ui_helpers import (
     RAW_CLINICAL_CSV,
     MANUAL_PATIENTS_CSV,
     set_selected_patient,
+    get_selected_patient,
     COHORT_EXPLAINER,
 )
 
@@ -65,6 +66,26 @@ with tab_predefined:
         unsafe_allow_html=True,
     )
 
+    with st.expander("ℹ️ Help choosing filters"):
+        if cohort_choice == "lifestyle":
+            st.markdown(
+                "Use these filters only to find a patient record; they do not change the patient's values.\n\n"
+                "- **Systolic / diastolic BP:** the two numbers in a blood-pressure reading, for example 120/80 mmHg.\n"
+                "- **Cholesterol level:** `1 = normal`, `2 = above normal`, `3 = well above normal`. "
+                "This dataset stores a category, not the exact cholesterol value.\n"
+                "- **Glucose level:** `1 = normal`, `2 = above normal`, `3 = well above normal`. "
+                "This is also a category rather than a lab value.\n"
+                "- **Smoking, physically active, and alcohol:** these are simple Yes/No fields recorded in the dataset."
+            )
+        else:
+            st.markdown(
+                "Use these filters only to find a patient record; they do not change the patient's values.\n\n"
+                "- **Resting BP:** blood pressure measured at rest.\n"
+                "- **Chest-pain type / resting ECG:** coded clinical test fields; use them when you know the source category.\n"
+                "- **Exercise angina:** whether exercise-related chest discomfort was recorded (Yes/No).\n"
+                "- **Fasting blood sugar > 120:** whether a fasting glucose result exceeded 120 mg/dL (Yes/No)."
+            )
+
     # -------------------------------------------------------------------------
     # Select correct raw dataset
     # -------------------------------------------------------------------------
@@ -105,10 +126,9 @@ with tab_predefined:
 
         if cohort_choice == "lifestyle":
 
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3, c4 = st.columns(4)
 
             with c1:
-
                 age_range = st.slider(
                     "Age filter",
                     int(df.age.min()),
@@ -120,30 +140,57 @@ with tab_predefined:
                 )
 
             with c2:
-
-                gender_filter = st.multiselect(
-                    "Gender",
-                    sorted(
-                        df.gender.unique().tolist()
-                    ),
-                    default=sorted(
-                        df.gender.unique().tolist()
-                    ),
+                systolic_bp_range = st.slider(
+                    "Systolic BP (mmHg)",
+                    int(df.ap_hi.min()), int(df.ap_hi.max()),
+                    (int(df.ap_hi.min()), int(df.ap_hi.max())),
                 )
 
             with c3:
-
-                max_rows = st.number_input(
-                    "Patients to browse",
-                    10,
-                    500,
-                    50,
-                    step=10,
+                diastolic_bp_range = st.slider(
+                    "Diastolic BP (mmHg)",
+                    int(df.ap_lo.min()), int(df.ap_lo.max()),
+                    (int(df.ap_lo.min()), int(df.ap_lo.max())),
                 )
+
+            with c4:
+                gender_filter = st.multiselect(
+                    "Gender",
+                    sorted(df.gender.unique().tolist()),
+                    default=sorted(df.gender.unique().tolist()),
+                )
+
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                cholesterol_filter = st.multiselect(
+                    "Cholesterol level", [1, 2, 3], default=[1, 2, 3]
+                )
+            with c2:
+                glucose_filter = st.multiselect(
+                    "Glucose level", [1, 2, 3], default=[1, 2, 3]
+                )
+            with c3:
+                smoking_filter = st.multiselect(
+                    "Smoking", [0, 1], default=[0, 1],
+                    format_func=lambda value: "Yes" if value else "No",
+                )
+            with c4:
+                activity_filter = st.multiselect(
+                    "Physically active", [0, 1], default=[0, 1],
+                    format_func=lambda value: "Yes" if value else "No",
+                )
+
+            max_rows = st.number_input("Patients to browse", 10, 500, 50, step=10)
 
             filtered = df[
                 (df.age.between(*age_range))
                 & (df.gender.isin(gender_filter))
+                & (df.ap_hi.between(*systolic_bp_range))
+                & (df.ap_lo.between(*diastolic_bp_range))
+                & (df.cholesterol.isin(cholesterol_filter))
+                & (df.gluc.isin(glucose_filter))
+                & (df.smoke.isin(smoking_filter))
+                & (df.active.isin(activity_filter))
             ].head(max_rows)
 
         # =====================================================================
@@ -152,16 +199,39 @@ with tab_predefined:
 
         else:
 
-            max_rows = st.number_input(
-                "Patients to browse",
-                10,
-                500,
-                50,
-                step=10,
-                key="clin_rows",
-            )
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                age_range = st.slider("Age filter", int(df.age.min()), int(df.age.max()),
+                                      (int(df.age.min()), int(df.age.max())), key="clin_age")
+            with c2:
+                resting_bp_range = st.slider("Resting BP (mmHg)", int(df.resting_bp.min()), int(df.resting_bp.max()),
+                                             (int(df.resting_bp.min()), int(df.resting_bp.max())))
+            with c3:
+                sex_filter = st.multiselect("Sex", sorted(df.sex.unique().tolist()),
+                                            default=sorted(df.sex.unique().tolist()),
+                                            format_func=lambda value: "Male" if value == 1 else "Female")
+            with c4:
+                angina_filter = st.multiselect("Exercise angina", [0, 1], default=[0, 1],
+                                               format_func=lambda value: "Yes" if value else "No")
 
-            filtered = df.head(max_rows)
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                chest_pain_filter = st.multiselect("Chest pain type", sorted(df.chest_pain_type.unique().tolist()),
+                                                    default=sorted(df.chest_pain_type.unique().tolist()))
+            with c2:
+                fasting_glucose_filter = st.multiselect("Fasting blood sugar > 120", [0, 1], default=[0, 1],
+                                                        format_func=lambda value: "Yes" if value else "No")
+            with c3:
+                max_rows = st.number_input("Patients to browse", 10, 500, 50, step=10, key="clin_rows")
+
+            filtered = df[
+                (df.age.between(*age_range))
+                & (df.resting_bp.between(*resting_bp_range))
+                & (df.sex.isin(sex_filter))
+                & (df.exercise_angina.isin(angina_filter))
+                & (df.chest_pain_type.isin(chest_pain_filter))
+                & (df.fasting_blood_sugar.isin(fasting_glucose_filter))
+            ].head(max_rows)
 
 
         # =====================================================================
@@ -214,39 +284,23 @@ with tab_predefined:
         # SELECT PATIENT
         # =====================================================================
 
-        c1, c2 = st.columns([2, 1])
-
-        with c1:
-
-            # Keep the backend variable as `row_index`.
-            # nb10b_patient_loader.py expects the actual dataset row number.
-
-            default_patient_id = (
-                int(
-                    filtered_display.iloc[0]["patient_id"]
+        if filtered_display.empty:
+            st.warning("No patients match these filters. Broaden one or more filters to continue.")
+            load_clicked = False
+            row_index = None
+        else:
+            c1, c2 = st.columns([2, 1])
+            with c1:
+                # Restrict choices to the filtered rows, while preserving the
+                # original dataset row number required by the backend loader.
+                row_index = st.selectbox(
+                    "Patient ID to load (pick from the filtered table above)",
+                    filtered_display["patient_id"].astype(int).tolist(),
                 )
-                if len(filtered_display)
-                else 0
-            )
-
-            row_index = st.number_input(
-                "Patient ID to load "
-                "(pick from the table above)",
-                min_value=0,
-                max_value=len(df) - 1,
-                value=default_patient_id,
-            )
-
-        with c2:
-
-            st.write("")
-            st.write("")
-
-            load_clicked = st.button(
-                "✅ Load this patient",
-                type="primary",
-                use_container_width=True,
-            )
+            with c2:
+                st.write("")
+                st.write("")
+                load_clicked = st.button("✅ Load this patient", type="primary", use_container_width=True)
 
 
         # =====================================================================
@@ -298,16 +352,6 @@ with tab_predefined:
                 st.success(
                     f"Loaded Patient ID {row_index}."
                 )
-
-
-                if st.button(
-                    "🗂️ Go to Patient Dashboard →",
-                    type="primary",
-                ):
-
-                    st.switch_page(
-                        "pages/2_Patient_Dashboard.py"
-                    )
 
 
             except ValueError as e:
@@ -612,18 +656,6 @@ with tab_manual:
                     f"Saved as `{patient_id}` and selected."
                 )
 
-
-                if st.button(
-                    "🗂️ Go to Patient Dashboard →",
-                    type="primary",
-                    key="go_dash_manual",
-                ):
-
-                    st.switch_page(
-                        "pages/2_Patient_Dashboard.py"
-                    )
-
-
             except ValueError as e:
 
                 st.error(
@@ -706,20 +738,19 @@ with tab_manual:
                         f"Loaded {pid}."
                     )
 
-
-                    if st.button(
-                        "🗂️ Go to Patient Dashboard →",
-                        type="primary",
-                        key="go_dash_saved",
-                    ):
-
-                        st.switch_page(
-                            "pages/2_Patient_Dashboard.py"
-                        )
-
-
                 except Exception as e:
 
                     st.error(
                         f"Could not load this patient: {e}"
                     )
+
+
+# This button is intentionally outside the one-click load/save blocks. A
+# Streamlit click triggers a rerun, so a button nested inside ``if load_clicked``
+# disappears before a second click can reach it.
+selected_patient, _, _, selected_label = get_selected_patient()
+if selected_patient is not None:
+    st.divider()
+    st.success(f"Selected patient: {selected_label}")
+    if st.button("🗂️ Go to Patient Dashboard →", type="primary", key="go_dash_selected"):
+        st.switch_page("pages/2_Patient_Dashboard.py")
